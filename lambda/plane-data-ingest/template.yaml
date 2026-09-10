@@ -5,6 +5,15 @@ Description: >
 
   Fetches live aircraft state data from the OpenSky Network API
 
+Parameters:
+  BackendIngestUrl:
+    Type: String
+    Description: URL of the Node backend's ingest endpoint that receives OpenSky snapshots
+  OpenSkySecretArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret holding the OpenSky OAuth2 clientId/clientSecret
+    Default: arn:aws:secretsmanager:eu-west-3:473671718628:secret:OpenSkyAPI-AQT5Lf
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -17,6 +26,15 @@ Globals:
   Api:
     TracingEnabled: true
 Resources:
+  IngestSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: plane-data-ingest/ingest-secret
+      Description: Shared secret used to authenticate requests from the OpenSky ingest Lambda to the Node backend's /ingest endpoint
+      GenerateSecretString:
+        ExcludePunctuation: true
+        PasswordLength: 32
+
   OpenSkyFetchFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -25,12 +43,34 @@ Resources:
       Runtime: nodejs24.x
       Architectures:
       - x86_64
+      # EventBridge fires this function every 2 minutes; it loops internally polling OpenSky
+      # roughly every 10s, so the timeout must comfortably cover that whole window.
+      Timeout: 110
+      Environment:
+        Variables:
+          BACKEND_INGEST_URL: !Ref BackendIngestUrl
+          OPENSKY_SECRET_ARN: !Ref OpenSkySecretArn
+          INGEST_SECRET_ARN: !Ref IngestSecret
+      Policies:
+      - AWSSecretsManagerGetSecretValuePolicy:
+          SecretArn: !Ref OpenSkySecretArn
+      - AWSSecretsManagerGetSecretValuePolicy:
+          SecretArn: !Ref IngestSecret
       Events:
         Ingest:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /opensky-fetch
             Method: get
+        PollSchedule:
+          Type: Schedule
+          Properties:
+            # Fires every 2 minutes, skipping 2am-4am. EventBridge can't schedule below
+            # 1-minute granularity, so the Lambda itself loops roughly every 10s internally.
+            Schedule: cron(0/2 5-23,0-1 * * ? *)
+            Name: opensky-fetch-poll-schedule
+            Description: Triggers the OpenSky ingest Lambda every 2 minutes, excluding 2am-5am
+            Enabled: true
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:
@@ -54,3 +94,6 @@ Outputs:
   OpenSkyFetchFunctionIamRole:
     Description: Implicit IAM Role created for OpenSky Fetch function
     Value: !GetAtt OpenSkyFetchFunctionRole.Arn
+  IngestSecretArn:
+    Description: ARN of the shared ingest secret - configure the Node backend to read this same secret for verifying incoming requests
+    Value: !Ref IngestSecret
