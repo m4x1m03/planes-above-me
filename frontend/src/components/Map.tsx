@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useGeolocation } from "../hooks/useGeolocation";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
 function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const { coords, status, error } = useGeolocation();
 
   useEffect(() => {
     if(!containerRef.current) return;
@@ -26,6 +28,13 @@ function Map() {
 
     }
   }, [])
+
+  useEffect(() => {
+    if(!coords) return;
+    if(!mapRef.current) return;
+
+    mapRef.current.flyTo({center:[coords.longitude, coords.latitude], zoom:12});
+  }, [coords])
 
   return(
     <div
