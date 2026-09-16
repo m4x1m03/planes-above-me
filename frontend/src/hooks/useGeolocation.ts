@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-type GeolocationStatus =
+export type GeolocationStatus =
   | 'idle'
   | 'loading'
   | 'success'
@@ -16,13 +16,19 @@ interface Coords {
 interface UseGeolocResult {
   coords: Coords | null,
   status: GeolocationStatus,
-  error: string | null
+  error: string | null,
+  retry: () => void
 }
 
 export function useGeolocation(): UseGeolocResult{
   const [coords, setCoords] = useState<Coords | null>(null);
   const [status, setStatus] = useState<GeolocationStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  const retry = () => {
+    setRetryCount((prev) => prev +1);
+  }
 
   useEffect(() => {
     if(!navigator.geolocation){
@@ -60,8 +66,8 @@ export function useGeolocation(): UseGeolocResult{
       }
     );
 
-  }, []);
+  }, [retryCount]);
 
 
-  return{coords, status, error};
+  return{coords, status, error, retry};
 }

@@ -2,13 +2,14 @@ import { useEffect, useRef } from "react";
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useGeolocation } from "../hooks/useGeolocation";
+import { GeolocationPrompt } from "./GeolocationPrompt";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
 function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const { coords, status, error } = useGeolocation();
+  const { coords, status, error, retry } = useGeolocation();
 
   useEffect(() => {
     if(!containerRef.current) return;
@@ -37,10 +38,13 @@ function Map() {
   }, [coords])
 
   return(
-    <div
-      ref={containerRef}
-      style={{width: '100vw', height: '100dvh'}}
-    />
+    <>
+      <div
+        ref={containerRef}
+        style={{width: '100vw', height: '100dvh'}}
+      />
+      <GeolocationPrompt status={status} error={error} retry={retry} />
+    </>
   )
 }
 
