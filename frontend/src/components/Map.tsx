@@ -6,56 +6,9 @@ import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import type { Plane } from "../types/planes";
+import { fetchPlanes } from "../utils/fetchPlanes";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
-
-const mockPlanes: Plane[] = [
-  {
-    icao24: 'a1b2c3',
-    lat: 48.926102,
-    lon: 2.217800,
-    heading: 0,
-    velocity: 220,
-    vertical_rate: 0,
-    timestamp: Date.now(),
-  },
-  {
-    icao24: 'd4e5f6',
-    lat: 48.930500,
-    lon: 2.225000,
-    heading: 90,
-    velocity: 250,
-    vertical_rate: 5,
-    timestamp: Date.now(),
-  },
-  {
-    icao24: '789abc',
-    lat: 48.921000,
-    lon: 2.210000,
-    heading: 180,
-    velocity: 300,
-    vertical_rate: -8,
-    timestamp: Date.now(),
-  },
-  {
-    icao24: 'def012',
-    lat: 48.923800,
-    lon: 2.230000,
-    heading: 270,
-    velocity: 180,
-    vertical_rate: 0,
-    timestamp: Date.now(),
-  },
-  {
-    icao24: '345678',
-    lat: 48.918500,
-    lon: 2.221500,
-    heading: 45,
-    velocity: 400,
-    vertical_rate: 12,
-    timestamp: Date.now(),
-  },
-];
 
 function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -93,9 +46,6 @@ function Map() {
           'icon-rotate': ['get', 'heading']
         }
       });
-
-      mapRef.current!.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(mockPlanes));
-
     })
 
     mapRef.current.on('error', (e) => {
@@ -114,6 +64,25 @@ function Map() {
 
     mapRef.current.flyTo({center:[coords.longitude, coords.latitude], zoom:12});
   }, [coords])
+
+  useEffect(() => {
+    if (!coords) return;
+    if (!mapRef.current) return;
+
+    const bbox = { lamin: coords.latitude-1, lomin: coords.longitude-2, lamax: coords.latitude+1, lomax: coords.longitude+2 };
+
+    const updatePlanes = async () => {
+      const planes = await fetchPlanes(bbox);
+      mapRef.current?.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(planes));
+    };
+
+    updatePlanes();
+    const intervalId = setInterval(updatePlanes, 10000);
+
+    return () => {
+        clearInterval(intervalId);
+    };
+  }, [coords]);
 
   return(
     <>
