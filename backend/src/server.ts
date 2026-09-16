@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import { ingestRoute } from './routes/ingest.js';
+import { planesRoute } from './routes/planes.js';
 
 export const buildServer = () => {
     const app = Fastify({
@@ -9,6 +10,7 @@ export const buildServer = () => {
     });
 
     app.register(ingestRoute);
+    app.register(planesRoute);
 
     return app;
 };
