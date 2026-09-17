@@ -11,8 +11,9 @@ export const buildServer = () => {
         bodyLimit: 10 * 1024 * 1024,
     });
 
+    // TODO: make it read a env var instead later
     app.register(fastifyCors, {
-        origin: 'http://localhost:5173',
+        origin: ['http://localhost:5173', 'https://planes-above.com', 'https://www.planes-above.com'],
     });
 
     app.register(ingestRoute);
