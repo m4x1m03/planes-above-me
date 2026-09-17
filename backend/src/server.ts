@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { ingestRoute } from './routes/ingest.js';
 import { planesRoute } from './routes/planes.js';
 import {fastifyCors} from '@fastify/cors';
+import { healthRoute } from './routes/health.js';
 
 export const buildServer = () => {
     const app = Fastify({
@@ -16,6 +17,7 @@ export const buildServer = () => {
 
     app.register(ingestRoute);
     app.register(planesRoute);
+    app.register(healthRoute);
 
     return app;
 };
