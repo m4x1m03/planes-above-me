@@ -1,0 +1,32 @@
+version: 0.2
+
+# This CodeBuild project's service role needs Lambda, EventBridge/Scheduler,
+# API Gateway, IAM role-creation, Secrets Manager, and CloudFormation permissions
+# (SAM provisions the function's execution role and the implicit REST API).
+#
+# Env vars to set on this CodeBuild project:
+#   BACKEND_INGEST_URL — required, template.yaml's BackendIngestUrl has no default
+#     (should be https://api.planes-above.com/ingest, not the host.docker.internal
+#     value from your local .env)
+# OpenSkySecretArn already has a default in the template pointing at your real
+# secret, so it's not passed here unless you want to override it.
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - pip install aws-sam-cli
+  build:
+    commands:
+      - echo Build started on `date`
+      - cd ingestion-lambda
+      - sam build
+  post_build:
+    commands:
+      - echo Deploying with SAM...
+      - >
+        sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+        --capabilities CAPABILITY_IAM --resolve-s3
+        --stack-name plane-data-ingest
+        --parameter-overrides BackendIngestUrl=$BACKEND_INGEST_URL
