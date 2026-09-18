@@ -5,7 +5,6 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
-import type { Plane } from "../types/planes";
 import { fetchPlanes } from "../utils/fetchPlanes";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;

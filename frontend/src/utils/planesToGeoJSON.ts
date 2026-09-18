@@ -1,4 +1,4 @@
-import type {Feature, FeatureCollection, Point} from 'geojson';
+import type {Feature, FeatureCollection} from 'geojson';
 import type { Plane } from '../types/planes';
 
 export function planesToGeoJSON(planes: Plane[]): FeatureCollection{

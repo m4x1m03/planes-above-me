@@ -1,4 +1,4 @@
-import { useGeolocation, type GeolocationStatus } from "../hooks/useGeolocation";
+import {type GeolocationStatus } from "../hooks/useGeolocation";
 
 interface GeolocationPromptProps{
   status: GeolocationStatus,
