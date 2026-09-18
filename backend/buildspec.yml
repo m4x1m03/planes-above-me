@@ -2,6 +2,8 @@ version: 0.2
 
 # Env vars to set on this CodeBuild project (Environment > Additional configuration):
 #   IMAGE_REPO_NAME, ECS_CLUSTER, ECS_SERVICE
+# AWS_DEFAULT_REGION is auto-provided by CodeBuild. AWS_ACCOUNT_ID is NOT
+# auto-provided, so it's derived below via STS instead of relying on it being set.
 # Requires "Privileged" mode enabled on the CodeBuild project (Docker builds need it).
 #
 # This role additionally needs, beyond ECR push and the earlier ecs:UpdateService/
@@ -45,11 +47,7 @@ phases:
         --query 'taskDefinition' --output json > current-task-def.json
       - echo Building new task definition pointing at the freshly built image...
       - >
-        jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG"
-        '.containerDefinitions[0].image = $IMAGE
-         | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
-               .compatibilities, .registeredAt, .registeredBy)'
-        current-task-def.json > new-task-def.json
+        jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' current-task-def.json > new-task-def.json
       - echo Registering new task definition revision...
       - >
         NEW_TASK_DEF_ARN=$(aws ecs register-task-definition
