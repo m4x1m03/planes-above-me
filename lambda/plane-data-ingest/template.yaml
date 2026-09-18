@@ -41,6 +41,7 @@ Resources:
       CodeUri: opensky-fetch/
       Handler: app.lambdaHandler
       Runtime: nodejs24.x
+      MemorySize: 512
       Architectures:
       - x86_64
       # EventBridge fires this function every 2 minutes; it loops internally polling OpenSky

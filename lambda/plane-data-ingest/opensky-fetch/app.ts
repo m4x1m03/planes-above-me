@@ -35,6 +35,24 @@ let cachedCredentials: OpenSkyCredentials | null = null;
 let cachedIngestSecret: string | null = null;
 let cachedToken: CachedToken | null = null;
 
+// Lambda's structured JSON logging serializes Error objects into its own
+// {errorType, errorMessage, stackTrace} shape and drops custom properties like
+// `cause` entirely, so we pull it out manually before logging.
+const describeError = (err: unknown): Record<string, unknown> => {
+    if (err instanceof Error) {
+        const cause = err.cause;
+        return {
+            message: err.message,
+            causeMessage: cause instanceof Error ? cause.message : cause,
+            causeCode:
+                cause && typeof cause === 'object' && 'code' in cause
+                    ? (cause as { code: unknown }).code
+                    : undefined,
+        };
+    }
+    return { message: String(err) };
+};
+
 const getSecretString = async (secretArn: string): Promise<string> => {
     const result = await secretsClient.send(new GetSecretValueCommand({ SecretId: secretArn }));
     if (!result.SecretString) {
@@ -72,15 +90,21 @@ const getAccessToken = async (): Promise<string> => {
 
     const { clientId, clientSecret } = await getOpenSkyCredentials();
 
-    const response = await fetch(OPENSKY_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-            grant_type: 'client_credentials',
-            client_id: clientId,
-            client_secret: clientSecret,
-        }),
-    });
+    let response: Response;
+    try {
+        response = await fetch(OPENSKY_TOKEN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: clientId,
+                client_secret: clientSecret,
+            }),
+        });
+    } catch (err) {
+        console.log(JSON.stringify({ stage: 'opensky-token-fetch', ...describeError(err) }));
+        throw err;
+    }
 
     if (!response.ok) {
         throw new Error(`OpenSky token endpoint returned ${response.status}`);
@@ -106,9 +130,16 @@ interface PollResult {
 const pollOnce = async (): Promise<PollResult> => {
     const accessToken = await getAccessToken();
 
-    const response = await fetch(OPENSKY_STATES_URL, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    let response: Response;
+    try {
+        response = await fetch(OPENSKY_STATES_URL, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+    } catch (err) {
+        console.log(JSON.stringify({ stage: 'opensky-states-fetch', ...describeError(err) }));
+        throw err;
+    }
+
     if (!response.ok) {
         throw new Error(`OpenSky API returned ${response.status}`);
     }
@@ -123,14 +154,20 @@ const pollOnce = async (): Promise<PollResult> => {
 
     const ingestSecret = await getIngestSecret();
 
-    const backendResponse = await fetch(BACKEND_INGEST_URL as string, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Ingest-Secret': ingestSecret,
-        },
-        body: rawBody,
-    });
+    let backendResponse: Response;
+    try {
+        backendResponse = await fetch(BACKEND_INGEST_URL as string, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Ingest-Secret': ingestSecret,
+            },
+            body: rawBody,
+        });
+    } catch (err) {
+        console.log(JSON.stringify({ stage: 'backend-ingest-post', ...describeError(err) }));
+        throw err;
+    }
 
     if (!backendResponse.ok) {
         throw new Error(`Backend ingest endpoint returned ${backendResponse.status}`);
