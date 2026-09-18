@@ -6,6 +6,11 @@ import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { fetchPlanes } from "../utils/fetchPlanes";
+import { setWorkerUrl } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+
+setWorkerUrl(maplibreWorkerUrl);
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
