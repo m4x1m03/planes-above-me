@@ -1,0 +1,23 @@
+version: 0.2
+
+# Env vars to set on this CodeBuild project:
+#   S3_BUCKET, CLOUDFRONT_DISTRIBUTION_ID, VITE_API_URL
+# VITE_API_URL gets baked into the built JS at compile time (Vite convention),
+# so it must be set here, not just at runtime.
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+  build:
+    commands:
+      - echo Build started on `date`
+      - cd frontend
+      - npm ci
+      - npm run build
+  post_build:
+    commands:
+      - echo Syncing to S3...
+      - aws s3 sync dist/ s3://$S3_BUCKET --delete
+      - echo Invalidating CloudFront cache...
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
