@@ -3,6 +3,13 @@ version: 0.2
 # Env vars to set on this CodeBuild project (Environment > Additional configuration):
 #   IMAGE_REPO_NAME, ECS_CLUSTER, ECS_SERVICE
 # Requires "Privileged" mode enabled on the CodeBuild project (Docker builds need it).
+#
+# This role additionally needs, beyond ECR push and the earlier ecs:UpdateService/
+# DescribeServices grant:
+#   ecs:DescribeTaskDefinition, ecs:RegisterTaskDefinition
+#   iam:PassRole on the task's own execution role AND task role (the roles referenced
+#     inside the task definition itself — separate from the earlier PassRole fix for
+#     CodePipeline -> CodeBuild). Scope this to those two role ARNs specifically.
 
 phases:
   install:
@@ -28,5 +35,27 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
-      - echo Forcing new ECS deployment...
-      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment
+      - echo Fetching current task definition used by the service...
+      - >
+        CURRENT_TASK_DEF_ARN=$(aws ecs describe-services
+        --cluster $ECS_CLUSTER --services $ECS_SERVICE
+        --query 'services[0].taskDefinition' --output text)
+      - >
+        aws ecs describe-task-definition --task-definition $CURRENT_TASK_DEF_ARN
+        --query 'taskDefinition' --output json > current-task-def.json
+      - echo Building new task definition pointing at the freshly built image...
+      - >
+        jq --arg IMAGE "$REPOSITORY_URI:$IMAGE_TAG"
+        '.containerDefinitions[0].image = $IMAGE
+         | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+               .compatibilities, .registeredAt, .registeredBy)'
+        current-task-def.json > new-task-def.json
+      - echo Registering new task definition revision...
+      - >
+        NEW_TASK_DEF_ARN=$(aws ecs register-task-definition
+        --cli-input-json file://new-task-def.json
+        --query 'taskDefinition.taskDefinitionArn' --output text)
+      - echo Updating service to the new revision...
+      - >
+        aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE
+        --task-definition $NEW_TASK_DEF_ARN
