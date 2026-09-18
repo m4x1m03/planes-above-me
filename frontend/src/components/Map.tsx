@@ -23,6 +23,9 @@ function Map() {
       zoom: 10,
     })
 
+    // temporary debug hook - remove once tiles are confirmed working
+    ;(window as any).debugMap = mapRef.current;
+
     mapRef.current.on('load', async () => {
       const image = await mapRef.current!.loadImage(plane);
       mapRef.current!.addImage('planes', image.data);
