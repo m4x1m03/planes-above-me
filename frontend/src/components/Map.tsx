@@ -52,13 +52,14 @@ function Map() {
           'icon-rotate': ['get', 'heading']
         },
         'paint' : {
-          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', '#7ef476']
+          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate', ['linear'], ['coalesce', ['get', 'altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
         }
       });
     })
 
     mapRef.current.on('click', 'planes-layer', (e) => {
       setSelectedPlane(e.features![0].properties.icao24);
+      console.log(e.features![0].properties);
     });
 
     mapRef.current.on('mouseenter', 'planes-layer', () => {

@@ -13,6 +13,8 @@ export function planesToGeoJSON(planes: Plane[]): FeatureCollection{
       'icao24' : plane.icao24,
       'velocity': plane.velocity,
       'vertical_rate': plane.vertical_rate,
+      'altitude' : plane.altitude,
+      'on_ground' : plane.on_ground,
       'timestamp' : plane.timestamp
     }
   }));

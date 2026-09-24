@@ -28,6 +28,8 @@ export const planesRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
           icao24 : state[0] as string,
           lon : state[5] as number,
           lat : state[6] as number,
+          altitude: state[7] as number,
+          on_ground: state[8] as boolean,
           velocity : state[9] as number,
           heading : state[10] as number,
           vertical_rate : state[11] as number,
