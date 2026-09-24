@@ -1,0 +1,113 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&display=swap");
+
+.plane-panel {
+  --panel-bg: #161d26;
+  --panel-ink: #e6edf3;
+  --panel-muted: #8b9bac;
+  --panel-rule: #2a3541;
+  --panel-signal: #e0a100; /* runway-light amber, used once */
+
+  color-scheme: dark;
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  width: min(320px, 85vw);
+  height: 100dvh;
+  overflow-y: auto;
+  padding: calc(1.5rem + env(safe-area-inset-top, 0px)) 1.5rem
+    calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  background: var(--panel-bg);
+  color: var(--panel-ink);
+  border-left: 4px solid var(--panel-signal);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.45);
+  font-family: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: plane-panel-in 180ms ease-out;
+}
+
+@keyframes plane-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane-panel {
+    animation: none;
+  }
+}
+
+.plane-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--panel-rule);
+}
+
+.plane-panel__hint {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  color: var(--panel-muted);
+}
+
+.plane-panel__ident {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.plane-panel__close {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--panel-muted);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.plane-panel__close:hover {
+  background: var(--panel-rule);
+  color: var(--panel-ink);
+}
+
+.plane-panel__close:focus-visible {
+  outline: 2px solid var(--panel-ink);
+  outline-offset: 2px;
+}
+
+.plane-panel__details {
+  margin: 0;
+}
+
+.plane-panel__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--panel-rule);
+}
+
+.plane-panel__row dt {
+  color: var(--panel-muted);
+}
+
+.plane-panel__row dd {
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+}

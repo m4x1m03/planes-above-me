@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useGeolocation } from "../hooks/useGeolocation";
@@ -9,6 +9,7 @@ import { fetchPlanes } from "../utils/fetchPlanes";
 import { setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { PlaneInfoPanel } from "./PlaneInfoPanel";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -18,6 +19,7 @@ function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const { coords, status, error, retry } = useGeolocation();
+  const [selectedPlane, setSelectedPlane] = useState<string | null>(null);
 
   useEffect(() => {
     if(!containerRef.current) return;
@@ -51,6 +53,18 @@ function Map() {
         }
       });
     })
+
+    mapRef.current.on('click', 'planes-layer', (e) => {
+      setSelectedPlane(e.features![0].properties.icao24);
+    });
+
+    mapRef.current.on('mouseenter', 'planes-layer', () => {
+      mapRef.current!.getCanvas().style.cursor='pointer';
+    });
+
+    mapRef.current.on('mouseleave', 'planes-layer', () => {
+      mapRef.current!.getCanvas().style.cursor='';
+    });
 
     mapRef.current.on('error', (e) => {
       console.error('MapLibre error:', e)
@@ -95,6 +109,7 @@ function Map() {
         style={{width: '100vw', height: '100dvh'}}
       />
       <GeolocationPrompt status={status} error={error} retry={retry} />
+      {selectedPlane && <PlaneInfoPanel icao24={selectedPlane} onClose={() => setSelectedPlane(null)}/>}
     </>
   )
 }
