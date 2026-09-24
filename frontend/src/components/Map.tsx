@@ -25,21 +25,21 @@ function Map() {
     if(!containerRef.current) return;
     mapRef.current = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/basic/style.json?key=${MAPTILER_KEY}`,
+      style: `https://api.maptiler.com/maps/01a0d2f1-5f3a-7989-b049-d7e03743420c/style.json?key=${MAPTILER_KEY}`,
       center: [2.349014, 48.864716],
       zoom: 10,
     })
 
     mapRef.current.on('load', async () => {
       const image = await mapRef.current!.loadImage(plane);
-      mapRef.current!.addImage('planes', image.data);
+      mapRef.current!.addImage('planes', image.data, {sdf: true, pixelRatio : 10});
       mapRef.current!.addSource('planes', {
         'type': 'geojson',
         'data': {
           'type': 'FeatureCollection',
           'features': []
-        }
-        
+        },
+        'promoteId' : 'icao24'
       });
       mapRef.current!.addLayer({
         'id': 'planes-layer',
@@ -47,9 +47,12 @@ function Map() {
         'source': 'planes',
         'layout': {
           'icon-image': 'planes',
-          'icon-size': 0.2,
+          'icon-size': 1,
           'icon-allow-overlap': true,
           'icon-rotate': ['get', 'heading']
+        },
+        'paint' : {
+          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', '#7ef476']
         }
       });
     })
@@ -101,6 +104,24 @@ function Map() {
         clearInterval(intervalId);
     };
   }, [coords]);
+
+  useEffect(() => {
+      if(!mapRef.current) return;
+      if(!mapRef.current.getSource('planes')) return;
+      if(selectedPlane){
+        mapRef.current.setFeatureState(
+          { source: 'planes', id: selectedPlane },
+          { selected: true }
+        );
+
+        return () => {
+          mapRef.current?.setFeatureState(
+            { source: 'planes', id: selectedPlane },
+            { selected: false }
+          );
+        }
+      }
+    }, [selectedPlane]);
 
   return(
     <>
