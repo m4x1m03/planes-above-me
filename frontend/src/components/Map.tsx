@@ -10,6 +10,7 @@ import { setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { PlaneInfoPanel } from "./PlaneInfoPanel";
+import type { Plane } from "../types/planes";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -19,7 +20,8 @@ function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const { coords, status, error, retry } = useGeolocation();
-  const [selectedPlane, setSelectedPlane] = useState<string | null>(null);
+  const [selectedPlaneID, setSelectedPlaneID] = useState<string | null>(null);
+  const [planeSnapshot, setPlaneSnapshot] = useState<Plane[]>([]);
 
   useEffect(() => {
     if(!containerRef.current) return;
@@ -52,14 +54,13 @@ function Map() {
           'icon-rotate': ['get', 'heading']
         },
         'paint' : {
-          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate', ['linear'], ['coalesce', ['get', 'altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
+          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate-hcl', ['linear'], ['coalesce', ['get', 'altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
         }
       });
     })
 
     mapRef.current.on('click', 'planes-layer', (e) => {
-      setSelectedPlane(e.features![0].properties.icao24);
-      console.log(e.features![0].properties);
+      setSelectedPlaneID(e.features![0].properties.icao24);
     });
 
     mapRef.current.on('mouseenter', 'planes-layer', () => {
@@ -96,6 +97,7 @@ function Map() {
     const updatePlanes = async () => {
       const planes = await fetchPlanes(bbox);
       mapRef.current?.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(planes));
+      setPlaneSnapshot(planes);
     };
 
     updatePlanes();
@@ -106,23 +108,25 @@ function Map() {
     };
   }, [coords]);
 
+  const selectedPlaneData = planeSnapshot.find((planeData) => planeData.icao24 === selectedPlaneID);
+
   useEffect(() => {
       if(!mapRef.current) return;
       if(!mapRef.current.getSource('planes')) return;
-      if(selectedPlane){
+      if(selectedPlaneID){
         mapRef.current.setFeatureState(
-          { source: 'planes', id: selectedPlane },
+          { source: 'planes', id: selectedPlaneID },
           { selected: true }
         );
 
         return () => {
           mapRef.current?.setFeatureState(
-            { source: 'planes', id: selectedPlane },
+            { source: 'planes', id: selectedPlaneID },
             { selected: false }
           );
         }
       }
-    }, [selectedPlane]);
+    }, [selectedPlaneID]);
 
   return(
     <>
@@ -131,7 +135,7 @@ function Map() {
         style={{width: '100vw', height: '100dvh'}}
       />
       <GeolocationPrompt status={status} error={error} retry={retry} />
-      {selectedPlane && <PlaneInfoPanel icao24={selectedPlane} onClose={() => setSelectedPlane(null)}/>}
+      {selectedPlaneData && <PlaneInfoPanel plane={selectedPlaneData} onClose={() => setSelectedPlaneID(null)}/>}
     </>
   )
 }

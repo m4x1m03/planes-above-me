@@ -111,3 +111,84 @@
   font-weight: 500;
   text-align: right;
 }
+
+/* Live readouts */
+
+.plane-panel__readouts {
+  margin: 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--panel-rule);
+}
+
+.plane-panel__readout {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.plane-panel__readout dt {
+  color: var(--panel-muted);
+}
+
+.plane-panel__readout dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  margin: 0;
+  text-align: right;
+}
+
+.plane-panel__reading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.plane-panel__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.plane-panel__unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--panel-muted);
+}
+
+.plane-panel__secondary {
+  font-size: 0.8125rem;
+  color: var(--panel-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.plane-panel__heading-arrow {
+  align-self: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--panel-ink);
+  transition: transform 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane-panel__heading-arrow {
+    transition: none;
+  }
+}
+
+/* Climb / descent arrow next to altitude */
+
+.plane-panel__trend {
+  align-self: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--panel-ink);
+}
+
+.plane-panel__trend--descending {
+  transform: rotate(180deg);
+}
