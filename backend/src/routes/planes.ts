@@ -26,6 +26,7 @@ export const planesRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
 
         const planes: Plane[] = snapshot.states.map((state) => ({
           icao24 : state[0] as string,
+          callsign: state[1] as string,
           lon : state[5] as number,
           lat : state[6] as number,
           altitude: state[7] as number,

@@ -192,3 +192,8 @@
 .plane-panel__trend--descending {
   transform: rotate(180deg);
 }
+
+.plane-panel__callsign {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}

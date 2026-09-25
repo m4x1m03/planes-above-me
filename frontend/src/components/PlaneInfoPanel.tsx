@@ -25,6 +25,7 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
   }, [onClose]);
 
   const { altitude, velocity, heading, on_ground, vertical_rate } = plane;
+  const callsign = plane.callsign?.trim() || null;
 
   // OpenSky vertical_rate is in m/s. Ignore tiny values so level flight doesn't flicker.
   const LEVEL_THRESHOLD = 0.5; // m/s, roughly 100 ft/min
@@ -110,6 +111,10 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
 
       {/* Static details: filled in once the plane and airport tables exist */}
       <dl className="plane-panel__details">
+        <div className="plane-panel__row">
+          <dt>Callsign</dt>
+          <dd className="plane-panel__callsign">{callsign ?? "—"}</dd>
+        </div>
         <div className="plane-panel__row">
           <dt>Airline</dt>
           <dd>—</dd>

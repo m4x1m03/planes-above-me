@@ -1,5 +1,6 @@
 export type Plane = {
   icao24: string;
+  callsign: string;
   lat: number;
   lon: number;
   heading: number;

@@ -11,6 +11,7 @@ export function planesToGeoJSON(planes: Plane[]): FeatureCollection{
     'properties': {
       'heading' : plane.heading,
       'icao24' : plane.icao24,
+      'callsign' : plane.callsign,
       'velocity': plane.velocity,
       'vertical_rate': plane.vertical_rate,
       'altitude' : plane.altitude,
