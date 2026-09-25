@@ -20,26 +20,15 @@ export const planesRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
 
         const snapshot = getSnapshot();
 
-        if(!snapshot){
-          return reply.code(200).send([]);
+        if (!snapshot) {
+            return reply.code(200).send([]);
         }
 
-        const planes: Plane[] = snapshot.states.map((state) => ({
-          icao24 : state[0] as string,
-          callsign: state[1] as string,
-          lon : state[5] as number,
-          lat : state[6] as number,
-          altitude: state[7] as number,
-          on_ground: state[8] as boolean,
-          velocity : state[9] as number,
-          heading : state[10] as number,
-          vertical_rate : state[11] as number,
-          timestamp : snapshot.time
-        }));
-
-        const inBox : Plane[] = planes.filter((plane) => {
-          return (plane.lat <= lat_max && plane.lat >= lat_min && plane.lon <= lon_max && plane.lon >= lon_min);
-        });
+        const inBox = snapshot.planes.filter(
+            (plane) =>
+                plane.lat >= lat_min && plane.lat <= lat_max &&
+                plane.lon >= lon_min && plane.lon <= lon_max,
+        );
 
         return reply.code(200).send(inBox);
     });
