@@ -22,6 +22,7 @@ function Map() {
   const { coords, status, error, retry } = useGeolocation();
   const [selectedPlaneID, setSelectedPlaneID] = useState<string | null>(null);
   const [planeSnapshot, setPlaneSnapshot] = useState<Plane[]>([]);
+  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     if(!containerRef.current) return;
@@ -43,6 +44,13 @@ function Map() {
         },
         'promoteId' : 'icao24'
       });
+      mapRef.current!.addSource('user-location', {
+        'type' : 'geojson',
+        'data': {
+          'type': 'FeatureCollection',
+          'features': []
+        },
+      })
       mapRef.current!.addLayer({
         'id': 'planes-layer',
         'type': 'symbol',
@@ -57,6 +65,21 @@ function Map() {
           'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate-hcl', ['linear'], ['coalesce', ['get', 'baro_altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
         }
       });
+      mapRef.current!.addLayer(
+        {
+          'id': 'user-location-layer',
+          'type': 'circle',
+          'source': 'user-location',
+          'paint': {
+            'circle-radius': 7,
+            'circle-color': '#3d9bff',
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#e6edf3',
+          },
+        },
+        'planes-layer'
+      );
+      setMapLoaded(true);
     })
 
     mapRef.current.on('click', 'planes-layer', (e) => {
@@ -91,6 +114,7 @@ function Map() {
   useEffect(() => {
     if (!coords) return;
     if (!mapRef.current) return;
+    if(!mapLoaded) return;
 
     const bbox = { lamin: coords.latitude-1, lomin: coords.longitude-2, lamax: coords.latitude+1, lomax: coords.longitude+2 };
 
@@ -107,6 +131,20 @@ function Map() {
         clearInterval(intervalId);
     };
   }, [coords]);
+
+  useEffect(() => {
+    if (!coords) return;
+    if (!mapLoaded) return;
+
+    mapRef.current?.getSource<maplibregl.GeoJSONSource>('user-location')?.setData({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [coords.longitude, coords.latitude],
+      },
+      properties: {},
+    });
+  }, [coords, mapLoaded]);
 
   const selectedPlaneData = planeSnapshot.find((planeData) => planeData.icao24 === selectedPlaneID);
 
