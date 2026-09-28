@@ -1,5 +1,8 @@
 import { useEffect, type ReactNode } from "react";
 import type { Plane } from "../types/planes.ts";
+import type { Coords } from "../hooks/useGeolocation"
+import { computeLookAngles } from "../utils/lookAngles";
+import { coordsToGeoPoint, planeToGeoPoint } from "../utils/lookAnglesInputs.ts";
 import {
   degreesToCompass,
   formatNumber,
@@ -11,10 +14,11 @@ import "./PlaneInfoPanel.css";
 
 type PlaneInfoPanelProps = {
   plane: Plane;
+  observerCoords: Coords | null;
   onClose: () => void;
 };
 
-export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
+export function PlaneInfoPanel({ plane, observerCoords, onClose }: PlaneInfoPanelProps) {
   // Close with the Escape key
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -24,7 +28,7 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const { altitude, velocity, heading, on_ground, vertical_rate } = plane;
+  const { baro_altitude, velocity, heading, on_ground, vertical_rate } = plane;
   const callsign = plane.callsign?.trim() || null;
 
   // OpenSky vertical_rate is in m/s. Ignore tiny values so level flight doesn't flicker.
@@ -35,6 +39,19 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
       : vertical_rate > 0
         ? "climbing"
         : "descending";
+
+  // Where to look from the user's position. Null when there is no observer
+  // (location denied or loading) or no usable plane position/altitude.
+  const observer = observerCoords ? coordsToGeoPoint(observerCoords) : null;
+  const target = planeToGeoPoint(plane);
+  const look = observer && target ? computeLookAngles(observer.point, target.point) : null;
+
+  // Height guesses affect elevation and distance, not direction.
+  const approx = observer?.heightSource === "assumed" || target?.altitudeSource === "baro";
+  const prefix = approx ? "~" : "";
+
+  const OVERHEAD_THRESHOLD = 85; // degrees; azimuth is meaningless near straight up
+  const isOverhead = look !== null && look.elevationDeg > OVERHEAD_THRESHOLD;
 
   return (
     <aside className="plane-panel" aria-label="Plane details">
@@ -60,11 +77,11 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
         ) : (
           <Readout
             label="Altitude"
-            value={altitude === null ? null : formatNumber(metersToFeet(altitude), 10)}
+            value={baro_altitude === null ? null : formatNumber(metersToFeet(baro_altitude), 10)}
             unit="ft"
-            secondary={altitude === null ? undefined : `${formatNumber(altitude, 10)} m`}
+            secondary={baro_altitude === null ? undefined : `${formatNumber(baro_altitude, 10)} m`}
           >
-            {altitude !== null && trend && (
+            {baro_altitude !== null && trend && (
               <svg
                 className={`plane-panel__trend plane-panel__trend--${trend}`}
                 viewBox="0 0 24 24"
@@ -132,6 +149,33 @@ export function PlaneInfoPanel({ plane, onClose }: PlaneInfoPanelProps) {
           <dd>—</dd>
         </div>
       </dl>
+
+      {/* Look angles: where to find the plane in the sky from the user's position */}
+      {look && (
+        <section aria-label="Where to look">
+          <p className="plane-panel__hint">From your position</p>
+          <dl className="plane-panel__readouts">
+            <Readout
+              label="Direction"
+              value={isOverhead ? "Overhead" : `${Math.round(look.azimuthDeg) % 360}°`}
+              unit={isOverhead ? undefined : degreesToCompass(look.azimuthDeg)}
+            />
+            <Readout
+              label="Elevation"
+              value={
+                look.elevationDeg < 0
+                  ? "Below horizon"
+                  : `${prefix}${look.elevationDeg.toFixed(1)}°`
+              }
+            />
+            <Readout
+              label="Distance"
+              value={`${prefix}${(look.slantRangeM / 1000).toFixed(1)}`}
+              unit="km"
+            />
+          </dl>
+        </section>
+      )}
     </aside>
   );
 }

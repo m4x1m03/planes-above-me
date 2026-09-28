@@ -54,7 +54,7 @@ function Map() {
           'icon-rotate': ['get', 'heading']
         },
         'paint' : {
-          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate-hcl', ['linear'], ['coalesce', ['get', 'altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
+          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate-hcl', ['linear'], ['coalesce', ['get', 'baro_altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
         }
       });
     })
@@ -135,7 +135,7 @@ function Map() {
         style={{width: '100vw', height: '100dvh'}}
       />
       <GeolocationPrompt status={status} error={error} retry={retry} />
-      {selectedPlaneData && <PlaneInfoPanel plane={selectedPlaneData} onClose={() => setSelectedPlaneID(null)}/>}
+      {selectedPlaneData && <PlaneInfoPanel plane={selectedPlaneData} observerCoords={coords} onClose={() => setSelectedPlaneID(null)}/>}
     </>
   )
 }

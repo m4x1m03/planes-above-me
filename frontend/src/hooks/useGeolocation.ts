@@ -8,9 +8,12 @@ export type GeolocationStatus =
   | 'error'
   | 'unsupported';
 
-interface Coords {
+export interface Coords {
   latitude: number,
   longitude: number,
+  altitude: number | null,
+  altitude_accuracy: number | null,
+  accuracy: number | null
 }
 
 interface UseGeolocResult {
@@ -41,7 +44,12 @@ export function useGeolocation(): UseGeolocResult{
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({latitude: position.coords.latitude, longitude: position.coords.longitude});
+        setCoords({
+          latitude: position.coords.latitude, 
+          longitude: position.coords.longitude, 
+          altitude: position.coords.altitude, 
+          altitude_accuracy: position.coords.altitudeAccuracy, 
+          accuracy: position.coords.accuracy});
         setStatus('success');
       },
       (error) => {
@@ -63,7 +71,12 @@ export function useGeolocation(): UseGeolocResult{
             setError("Whoops, an uncaught error happened")
             break;
         }
-      }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15_000,
+        maximumAge: 30_000,
+      },
     );
 
   }, [retryCount]);
