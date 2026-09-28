@@ -26,11 +26,12 @@ const toPlane = (state: unknown[], time: number): Plane | null => {
         callsign: typeof state[1] === 'string' ? state[1].trim() || null : null,
         lon,
         lat,
-        altitude: state[7] as number | null,
+        baro_altitude: state[7] as number | null,
         on_ground: state[8] as boolean,
         velocity: state[9] as number | null,
         heading: state[10] as number | null,
         vertical_rate: state[11] as number | null,
+        geo_altitude: state[13] as number | null,
         timestamp: time,
     };
 };

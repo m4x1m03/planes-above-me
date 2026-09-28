@@ -6,7 +6,8 @@ export type Plane = {
   heading: number | null;
   velocity: number | null;
   vertical_rate: number | null;
-  altitude: number | null;
+  baro_altitude: number | null;
+  geo_altitude : number | null;
   on_ground: boolean;
   timestamp: number;
 }

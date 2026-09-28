@@ -15,6 +15,7 @@ export function planesToGeoJSON(planes: Plane[]): FeatureCollection{
       'velocity': plane.velocity,
       'vertical_rate': plane.vertical_rate,
       'altitude' : plane.altitude,
+      'geo_altitude' : plane.geo_altitude,
       'on_ground' : plane.on_ground,
       'timestamp' : plane.timestamp
     }
