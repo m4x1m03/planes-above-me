@@ -9,5 +9,6 @@ export type Plane = {
   baro_altitude: number | null;
   geo_altitude : number | null;
   on_ground: boolean;
+  time_position: number | null;
   timestamp: number;
 }

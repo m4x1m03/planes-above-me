@@ -7,7 +7,6 @@ import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { fetchPlanes } from "../utils/fetchPlanes";
 import { setWorkerUrl } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { PlaneInfoPanel } from "./PlaneInfoPanel";
 import type { Plane } from "../types/planes";
@@ -130,7 +129,7 @@ function Map() {
     return () => {
         clearInterval(intervalId);
     };
-  }, [coords]);
+  }, [coords, mapLoaded]);
 
   useEffect(() => {
     if (!coords) return;

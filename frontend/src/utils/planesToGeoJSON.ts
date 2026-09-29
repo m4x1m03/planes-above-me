@@ -17,6 +17,7 @@ export function planesToGeoJSON(planes: Plane[]): FeatureCollection{
       'baro_altitude' : plane.baro_altitude,
       'geo_altitude' : plane.geo_altitude,
       'on_ground' : plane.on_ground,
+      'time_position' : plane.time_position,
       'timestamp' : plane.timestamp
     }
   }));

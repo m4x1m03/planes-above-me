@@ -24,6 +24,7 @@ const toPlane = (state: unknown[], time: number): Plane | null => {
     return {
         icao24: state[0] as string,
         callsign: typeof state[1] === 'string' ? state[1].trim() || null : null,
+        time_position: state[3] as number | null,
         lon,
         lat,
         baro_altitude: state[7] as number | null,
