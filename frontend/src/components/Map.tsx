@@ -10,6 +10,7 @@ import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { PlaneInfoPanel } from "./PlaneInfoPanel";
 import type { Plane } from "../types/planes";
+import { predictPlane } from "../utils/predictPlane";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -18,6 +19,7 @@ const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const planesRef = useRef<Plane[]>([]);
   const { coords, status, error, retry } = useGeolocation();
   const [selectedPlaneID, setSelectedPlaneID] = useState<string | null>(null);
   const [planeSnapshot, setPlaneSnapshot] = useState<Plane[]>([]);
@@ -112,14 +114,12 @@ function Map() {
 
   useEffect(() => {
     if (!coords) return;
-    if (!mapRef.current) return;
-    if(!mapLoaded) return;
 
     const bbox = { lamin: coords.latitude-1, lomin: coords.longitude-2, lamax: coords.latitude+1, lomax: coords.longitude+2 };
 
     const updatePlanes = async () => {
       const planes = await fetchPlanes(bbox);
-      mapRef.current?.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(planes));
+      planesRef.current = planes;
       setPlaneSnapshot(planes);
     };
 
@@ -129,7 +129,7 @@ function Map() {
     return () => {
         clearInterval(intervalId);
     };
-  }, [coords, mapLoaded]);
+  }, [coords]);
 
   useEffect(() => {
     if (!coords) return;
@@ -145,12 +145,31 @@ function Map() {
     });
   }, [coords, mapLoaded]);
 
+ useEffect(() => {
+    if(!mapLoaded) return;
+    let frameId: number;
+    let lastUpdate = 0;
+
+    const tick = (now: number) => {
+      frameId = requestAnimationFrame(tick);
+      if(now-lastUpdate<150) return;
+      lastUpdate=now;
+      
+      const nowSec = Date.now() / 1000;
+      const predicted = planesRef.current.map(p => predictPlane(p, nowSec));
+      mapRef.current?.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(predicted));
+    }
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [mapLoaded]) 
+
   const selectedPlaneData = planeSnapshot.find((planeData) => planeData.icao24 === selectedPlaneID);
 
   useEffect(() => {
       if(!mapRef.current) return;
       if(!mapRef.current.getSource('planes')) return;
       if(selectedPlaneID){
+        console.log(selectedPlaneData);
         mapRef.current.setFeatureState(
           { source: 'planes', id: selectedPlaneID },
           { selected: true }
