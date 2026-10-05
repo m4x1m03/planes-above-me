@@ -101,7 +101,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
 
     return () => {
       mapRef.current?.remove();
-
+      mapRef.current = null;
     }
   }, [])
 
@@ -134,7 +134,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
 
   useEffect(() => {
       if(!mapRef.current) return;
-      if(!mapRef.current.getSource('planes')) return;
+      if(!mapLoaded) return;
       if(selectedPlaneID){
         mapRef.current.setFeatureState(
           { source: 'planes', id: selectedPlaneID },
@@ -148,7 +148,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
           );
         }
       }
-    }, [selectedPlaneID]);
+    }, [selectedPlaneID, mapLoaded]);
 
   return(
     <>
