@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useState } from "react";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { usePlanes } from "../hooks/usePlanes";
 import { GeolocationPrompt } from "./GeolocationPrompt";
