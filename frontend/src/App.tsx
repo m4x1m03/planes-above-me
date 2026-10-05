@@ -1,4 +1,4 @@
-import Map from './components/Map'
+import PlaneViewer from './components/PlaneViewer'
 import './App.css'
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
     <>
       <section id="center">
         <div className="hero">
-          <Map />
+          <PlaneViewer />
         </div>
       </section>
     </>
