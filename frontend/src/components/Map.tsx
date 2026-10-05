@@ -3,15 +3,13 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useGeolocation } from "../hooks/useGeolocation";
 import { usePlanes } from "../hooks/usePlanes";
+import { usePredictionLoop } from "../hooks/usePredictionLoop";
 import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
-import { fetchPlanes } from "../utils/fetchPlanes";
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { PlaneInfoPanel } from "./PlaneInfoPanel";
-import type { Plane } from "../types/planes";
-import { predictPlane } from "../utils/predictPlane";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -126,23 +124,11 @@ function Map() {
     });
   }, [coords, mapLoaded]);
 
- useEffect(() => {
-    if(!mapLoaded) return;
-    let frameId: number;
-    let lastUpdate = 0;
-
-    const tick = (now: number) => {
-      frameId = requestAnimationFrame(tick);
-      if(now-lastUpdate<150) return;
-      lastUpdate=now;
-      
-      const nowSec = Date.now() / 1000;
-      const predicted = planesRef.current.map(p => predictPlane(p, nowSec));
-      mapRef.current?.getSource<maplibregl.GeoJSONSource>('planes')?.setData(planesToGeoJSON(predicted));
-    }
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, [mapLoaded]) 
+  usePredictionLoop(planesRef, (predicted) => {
+    mapRef.current
+      ?.getSource<maplibregl.GeoJSONSource>('planes')
+      ?.setData(planesToGeoJSON(predicted));
+  }, mapLoaded);
 
   const selectedPlaneData = planeSnapshot.find((planeData) => planeData.icao24 === selectedPlaneID);
 
