@@ -1,26 +1,28 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useGeolocation } from "../hooks/useGeolocation";
-import { usePlanes } from "../hooks/usePlanes";
 import { usePredictionLoop } from "../hooks/usePredictionLoop";
-import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
+import type { Coords } from "../hooks/useGeolocation";
+import type { Plane } from "../types/planes";
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { PlaneInfoPanel } from "./PlaneInfoPanel";
 
 setWorkerUrl(maplibreWorkerUrl);
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 
-function Map() {
+interface MapViewProps {
+  coords: Coords | null;
+  planesRef: RefObject<Plane[]>;
+  selectedPlaneID: string | null;
+  onSelectPlane: (id: string | null) => void;
+}
+
+function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const { coords, status, error, retry } = useGeolocation();
-  const { planesRef, planeSnapshot } = usePlanes(coords);
-  const [selectedPlaneID, setSelectedPlaneID] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
 
   useEffect(() => {
@@ -82,7 +84,7 @@ function Map() {
     })
 
     mapRef.current.on('click', 'planes-layer', (e) => {
-      setSelectedPlaneID(e.features![0].properties.icao24);
+      onSelectPlane(e.features![0].properties.icao24);
     });
 
     mapRef.current.on('mouseenter', 'planes-layer', () => {
@@ -130,13 +132,10 @@ function Map() {
       ?.setData(planesToGeoJSON(predicted));
   }, mapLoaded);
 
-  const selectedPlaneData = planeSnapshot.find((planeData) => planeData.icao24 === selectedPlaneID);
-
   useEffect(() => {
       if(!mapRef.current) return;
       if(!mapRef.current.getSource('planes')) return;
       if(selectedPlaneID){
-        console.log(selectedPlaneData);
         mapRef.current.setFeatureState(
           { source: 'planes', id: selectedPlaneID },
           { selected: true }
@@ -157,10 +156,8 @@ function Map() {
         ref={containerRef}
         style={{width: '100vw', height: '100dvh'}}
       />
-      <GeolocationPrompt status={status} error={error} retry={retry} />
-      {selectedPlaneData && <PlaneInfoPanel plane={selectedPlaneData} observerCoords={coords} onClose={() => setSelectedPlaneID(null)}/>}
     </>
   )
 }
 
-export default Map;
+export default MapView;
