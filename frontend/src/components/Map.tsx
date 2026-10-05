@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useGeolocation } from "../hooks/useGeolocation";
+import { usePlanes } from "../hooks/usePlanes";
 import { GeolocationPrompt } from "./GeolocationPrompt";
 import plane from '../assets/plane-icon.png';
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
@@ -19,10 +20,9 @@ const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 function Map() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const planesRef = useRef<Plane[]>([]);
   const { coords, status, error, retry } = useGeolocation();
+  const { planesRef, planeSnapshot } = usePlanes(coords);
   const [selectedPlaneID, setSelectedPlaneID] = useState<string | null>(null);
-  const [planeSnapshot, setPlaneSnapshot] = useState<Plane[]>([]);
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
 
   useEffect(() => {
@@ -111,25 +111,6 @@ function Map() {
 
     mapRef.current.flyTo({center:[coords.longitude, coords.latitude], zoom:12});
   }, [coords])
-
-  useEffect(() => {
-    if (!coords) return;
-
-    const bbox = { lamin: coords.latitude-1, lomin: coords.longitude-2, lamax: coords.latitude+1, lomax: coords.longitude+2 };
-
-    const updatePlanes = async () => {
-      const planes = await fetchPlanes(bbox);
-      planesRef.current = planes;
-      setPlaneSnapshot(planes);
-    };
-
-    updatePlanes();
-    const intervalId = setInterval(updatePlanes, 10000);
-
-    return () => {
-        clearInterval(intervalId);
-    };
-  }, [coords]);
 
   useEffect(() => {
     if (!coords) return;
