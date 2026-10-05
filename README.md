@@ -23,7 +23,7 @@ A cloud-hosted, open-source web app for identifying planes in your visual range 
 - [x] Plane details panel with live metrics from ADS-B data
 - [x] Dead reckoning using flat earth estimation for fast updates
 - [x] Azimuth and elevation based on user's location using round earth calculations
-- [ ] Refactor for different view implementation
+- [x] Refactor for different view implementation
 - [ ] Radar view
 - [ ] Dome view (star-map style sky view)
 
