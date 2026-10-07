@@ -1,5 +1,6 @@
 export type GeoPoint = { lat: number; lon: number; height: number }; // degrees, degrees, meters
 export type LookAngles = { azimuthDeg: number; elevationDeg: number; slantRangeM: number };
+export type ENU = { e: number; n: number; u: number };
 
 const toRad = (deg: number) => deg * (Math.PI / 180);
 const toDeg = (rad: number) => rad * (180 / Math.PI);
@@ -35,15 +36,14 @@ function ECEFToENU(dx:number, dy:number, dz:number, observer: GeoPoint){
   return{e,n,u};
 }
 
+export function computeENU(observer: GeoPoint, plane: GeoPoint): ENU {
+  const o = geodeticToECEF(observer);
+  const p = geodeticToECEF(plane);
+  return ECEFToENU(p.x - o.x, p.y - o.y, p.z - o.z, observer);
+}
+
 export function computeLookAngles(observer: GeoPoint, plane:GeoPoint): LookAngles{
-  const observerECEF = geodeticToECEF(observer);
-  const planeECEF = geodeticToECEF(plane);
-
-  const dx = planeECEF.x - observerECEF.x;
-  const dy = planeECEF.y - observerECEF.y;
-  const dz = planeECEF.z - observerECEF.z;
-
-  const { e, n, u } = ECEFToENU(dx, dy, dz, observer);
+  const { e, n, u } = computeENU(observer, plane);
 
   const azimuth = Math.atan2(e, n);
   const elevation = Math.atan2(u, Math.hypot(e, n));
