@@ -3,6 +3,8 @@ import type { Coords } from "../hooks/useGeolocation";
 import type { Plane } from "../types/planes";
 import type { View } from "../types/views";
 import RadarScope from "./RadarScope";
+import { RangeControl } from "./RangeControl";
+import { AltitudeLegend } from "./AltitudeLegend";
 
 interface RadarViewProps {
   coords: Coords | null;
@@ -16,27 +18,38 @@ interface RadarViewProps {
   onRequestView: (view: View) => void;
 }
 
-function RadarView(_props: RadarViewProps) {
+function RadarView({coords, rangeKm, rangeSteps, planesRef, selectedPlaneID, onSelectPlane, onRangeChange,}: RadarViewProps) {
   return (
     <div
       style={{
         width: '100vw',
         height: '100dvh',
+        boxSizing: 'border-box',
+        padding: 24,
         background: '#0d1117',
         color: '#9ba5b0',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 16,
       }}
     >
-      <div style={{ width: 'min(90vw, 90dvh)' }}>
+      <div style={{ alignSelf: 'stretch', display: 'flex', justifyContent: 'flex-end', minHeight: 52 }}>
+        <RangeControl rangeKm={rangeKm} steps={rangeSteps} onChange={onRangeChange} />
+      </div>
+
+      <div style={{ width: 'min(100%, calc(100dvh - 140px))' }}>
         <RadarScope
-          coords={_props.coords}
-          rangeKm={_props.rangeKm}
-          planesRef={_props.planesRef}
-          selectedPlaneID={_props.selectedPlaneID}
-          onSelectPlane={_props.onSelectPlane}
+          coords={coords}
+          rangeKm={rangeKm}
+          planesRef={planesRef}
+          selectedPlaneID={selectedPlaneID}
+          onSelectPlane={onSelectPlane}
         />
+      </div>
+
+      <div style={{ alignSelf: 'stretch', display: 'flex'}}>
+        <AltitudeLegend />
       </div>
     </div>
   );
