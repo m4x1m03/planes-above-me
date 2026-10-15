@@ -77,8 +77,10 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
 
   return (
     <div
+      data-icao24={plane.icao24}
       style={{
         flexShrink: 0,
+        scrollMarginBlock: 8,
         background: "#161b22",
         border: `1.5px solid ${selected ? SELECTED_COLOR : "#30363d"}`,
         borderRadius: 10,
@@ -188,7 +190,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
             <Detail label="Heading" value={orDash(plane.heading, formatBearing)} />
             <Detail label="ICAO24" value={plane.icao24} />
             {/* Add a Registration cell here once the Plane type carries it */}
-            <Detail label="Squawk" value={plane.squack ?? "—"} />
+            <Detail label="Squawk" value={plane.squawk ?? "—"} />
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

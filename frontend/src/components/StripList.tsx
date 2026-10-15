@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Coords } from "../hooks/useGeolocation";
 import type { Plane } from "../types/planes";
 import type { View } from "../types/views";
@@ -51,6 +51,17 @@ export function StripList({
     () => buildStripRows(planeSnapshot, observer, rangeKm, sort),
     [planeSnapshot, observer, rangeKm, sort],
   );
+
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selectedPlaneID) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-icao24="${selectedPlaneID}"]`);
+    if (!el) return; // selected plane is outside the range, so it has no strip
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+  }, [selectedPlaneID]);
 
   const count = `${rows.length} ${rows.length === 1 ? "plane" : "planes"} within ${rangeKm} km`;
 
@@ -118,6 +129,7 @@ export function StripList({
         </p>
       ) : (
         <div
+          ref={listRef}
           style={{
             flex: 1,
             minHeight: 0,

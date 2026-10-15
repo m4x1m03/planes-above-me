@@ -11,5 +11,5 @@ export type Plane = {
   on_ground: boolean;
   time_position: number | null;
   timestamp: number;
-  squack: string | null;
+  squawk: string | null;
 }
