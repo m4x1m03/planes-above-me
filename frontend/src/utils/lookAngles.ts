@@ -42,17 +42,18 @@ export function computeENU(observer: GeoPoint, plane: GeoPoint): ENU {
   return ECEFToENU(p.x - o.x, p.y - o.y, p.z - o.z, observer);
 }
 
-export function computeLookAngles(observer: GeoPoint, plane:GeoPoint): LookAngles{
-  const { e, n, u } = computeENU(observer, plane);
-
+export function lookAnglesFromENU({ e, n, u }: ENU): LookAngles {
   const azimuth = Math.atan2(e, n);
   const elevation = Math.atan2(u, Math.hypot(e, n));
   const slantRange = Math.hypot(e, n, u);
 
-
-  return{
-    azimuthDeg: (toDeg(azimuth)+360)%360,
+  return {
+    azimuthDeg: (toDeg(azimuth) + 360) % 360,
     elevationDeg: toDeg(elevation),
-    slantRangeM: slantRange
-  }
+    slantRangeM: slantRange,
+  };
+}
+
+export function computeLookAngles(observer: GeoPoint, plane: GeoPoint): LookAngles {
+  return lookAnglesFromENU(computeENU(observer, plane));
 }
