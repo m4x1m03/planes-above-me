@@ -33,6 +33,7 @@ const toPlane = (state: unknown[], time: number): Plane | null => {
         heading: state[10] as number | null,
         vertical_rate: state[11] as number | null,
         geo_altitude: state[13] as number | null,
+        squawk: state[14] as string | null,
         timestamp: time,
     };
 };

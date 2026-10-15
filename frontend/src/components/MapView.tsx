@@ -8,6 +8,8 @@ import type { Plane } from "../types/planes";
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { altitudeColorExpression } from "../libs/planeStyle";
+import { SELECTED_COLOR } from "../libs/planeStyle";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -63,7 +65,9 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
           'icon-rotate': ['get', 'heading']
         },
         'paint' : {
-          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#fbd100', ['interpolate-hcl', ['linear'], ['coalesce', ['get', 'baro_altitude'], 0], 0,'#ff3838', 3000, '#b6ff38', 6000, '#38ffee', 9000, '#7738ff']]
+          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false],
+            SELECTED_COLOR,
+            altitudeColorExpression()]
         }
       });
       mapRef.current!.addLayer(
@@ -101,7 +105,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
 
     return () => {
       mapRef.current?.remove();
-
+      mapRef.current = null;
     }
   }, [])
 
@@ -134,7 +138,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
 
   useEffect(() => {
       if(!mapRef.current) return;
-      if(!mapRef.current.getSource('planes')) return;
+      if(!mapLoaded) return;
       if(selectedPlaneID){
         mapRef.current.setFeatureState(
           { source: 'planes', id: selectedPlaneID },
@@ -148,7 +152,7 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
           );
         }
       }
-    }, [selectedPlaneID]);
+    }, [selectedPlaneID, mapLoaded]);
 
   return(
     <>
