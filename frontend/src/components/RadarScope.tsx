@@ -6,6 +6,7 @@ import { drawScope, drawUser, drawPlane, drawLabel, drawHalo, isCompact, scopeRa
 import { computeENU } from "../utils/lookAngles";
 import { toRadarXY, isInRange, observerPoint, planePoint } from "../utils/radarGeometry";
 import { planeColor, SELECTED_COLOR } from "../libs/planeStyle.ts";
+import { planeLabel } from "../utils/planeLabel"
 
 interface RadarScopeProps {
   coords: Coords | null;
@@ -13,10 +14,6 @@ interface RadarScopeProps {
   planesRef: RefObject<Plane[]>;
   selectedPlaneID: string | null;
   onSelectPlane: (id: string | null) => void;
-}
-
-function label(plane: Plane): string {
-  return plane.callsign?.trim() || plane.icao24;
 }
 
 function RadarScope({rangeKm, coords, planesRef, selectedPlaneID, onSelectPlane}:RadarScopeProps){
@@ -81,14 +78,14 @@ function RadarScope({rangeKm, coords, planesRef, selectedPlaneID, onSelectPlane}
         }
 
         drawPlane(ctx, x, y, plane.heading, planeColor(plane.baro_altitude, false), glyphPx);
-        if (!compact) drawLabel(ctx, x, y, label(plane));
+        if (!compact) drawLabel(ctx, x, y, planeLabel(plane));
       }
 
       if (selected) {
         const { plane, x, y } = selected;
         drawHalo(ctx, x, y, haloPx);
         drawPlane(ctx, x, y, plane.heading, SELECTED_COLOR, glyphPx);
-        drawLabel(ctx, x, y, label(plane), SELECTED_COLOR);
+        drawLabel(ctx, x, y, planeLabel(plane), SELECTED_COLOR);
       }
     }
 
