@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import type { ENU } from "./lookAngles";
-import { toRadarXY, horizontalDistanceM, isInRange } from "./radarGeometry";
+import {computeENU} from "./lookAngles";
+import { toRadarXY, horizontalDistanceM, isInRange, observerPoint, planePoint } from "./radarGeometry";
+import type { Coords } from "../hooks/useGeolocation";
+import type { Plane } from "../types/planes";
 
 const R = 200; // radiusPx
 const RANGE = 50; // km
@@ -12,6 +15,19 @@ function expectXY(actual: { x: number; y: number }, x: number, y: number) {
   expect(actual.x).toBeCloseTo(x);
   expect(actual.y).toBeCloseTo(y);
 }
+
+const plane = (over: Partial<Plane> = {}): Plane =>
+  ({
+    icao24: "abc123",
+    lat: 48.9,
+    lon: 2.4,
+    geo_altitude: 10_000,
+    baro_altitude: 9_800,
+    ...over,
+  }) as Plane;
+
+const coords = (over: Partial<Coords> = {}): Coords =>
+  ({ latitude: 48.85, longitude: 2.35, altitude: null, ...over }) as Coords;
 
 describe("toRadarXY", () => {
   describe("cardinal directions at full range land on the edge", () => {
@@ -131,5 +147,56 @@ describe("isInRange", () => {
       const { x, y } = toRadarXY(p, RANGE, R);
       expect(isInRange(p, RANGE)).toBe(Math.hypot(x, y) <= R + 1e-9);
     }
+  });
+});
+
+describe("planePoint", () => {
+  it("copies latitude and longitude", () => {
+    const p = planePoint(plane({ lat: 48.7, lon: 2.6 }));
+    expect(p.lat).toBe(48.7);
+    expect(p.lon).toBe(2.6);
+  });
+
+  it("accepts coordinates of exactly 0 (equator / Greenwich)", () => {
+    const p = planePoint(plane({ lat: 0, lon: 0 }));
+    expect(p.lat).toBe(0);
+    expect(p.lon).toBe(0);
+  });
+
+  it("prefers geometric altitude", () => {
+    expect(planePoint(plane({ geo_altitude: 10_000, baro_altitude: 9_800 })).height).toBe(10_000);
+  });
+
+  it("falls back to barometric altitude", () => {
+    expect(planePoint(plane({ geo_altitude: null, baro_altitude: 9_800 })).height).toBe(9_800);
+  });
+
+  it("uses 0 when both altitudes are missing", () => {
+    expect(planePoint(plane({ geo_altitude: null, baro_altitude: null })).height).toBe(0);
+  });
+
+  it("keeps a geometric altitude of 0 instead of falling back", () => {
+    // ?? only falls back on null/undefined; || would wrongly pick baro here
+    expect(planePoint(plane({ geo_altitude: 0, baro_altitude: 50 })).height).toBe(0);
+  });
+});
+
+describe("observerPoint + planePoint + computeENU", () => {
+  const observer = observerPoint(coords({ latitude: 48.85, longitude: 2.35 }));
+  const northPlane = plane({ lat: 48.95, lon: 2.35, geo_altitude: 0 });
+
+  it("puts a plane 0.1° north of the observer about 11 km north", () => {
+    const { e, n } = computeENU(observer, planePoint(northPlane));
+    expect(n).toBeCloseTo(11_120, -2); // within ~50 m
+    expect(Math.abs(e)).toBeLessThan(1);
+  });
+
+  it("shows up on the radar in the right place", () => {
+    const enu = computeENU(observer, planePoint(northPlane));
+    expect(isInRange(enu, 25)).toBe(true);
+    expect(isInRange(enu, 10)).toBe(false);
+    const { x, y } = toRadarXY(enu, 25, R);
+    expect(Math.abs(x)).toBeLessThan(0.1);
+    expect(y).toBeCloseTo(-R * (11.12 / 25), 0); // above centre
   });
 });

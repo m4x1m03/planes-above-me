@@ -4,7 +4,7 @@ import type { Plane } from "../types/planes";
 import { usePredictionLoop } from "../hooks/usePredictionLoop";
 import { drawScope, drawUser, drawPlane, drawLabel, drawHalo, isCompact, scopeRadius, planeSizes } from "../utils/radarDraw";
 import { computeENU } from "../utils/lookAngles";
-import { toRadarXY, isInRange } from "../utils/radarGeometry";
+import { toRadarXY, isInRange, observerPoint, planePoint } from "../utils/radarGeometry";
 import { planeColor, SELECTED_COLOR } from "../libs/planeStyle.ts";
 
 interface RadarScopeProps {
@@ -60,20 +60,14 @@ function RadarScope({rangeKm, coords, planesRef, selectedPlaneID, onSelectPlane}
     const drawn: { id: string; x: number; y: number }[] = [];
 
     if (coords) {
-      const observer = {
-        lat: coords.latitude,
-        lon: coords.longitude,
-        height: coords.altitude ?? 0,
-      };
+      const observer = observerPoint(coords);
 
       let selected: { plane: Plane; x: number; y: number } | null = null;
 
       for (const plane of predicted) {
-        const enu = computeENU(observer, {
-          lat: plane.lat,
-          lon: plane.lon,
-          height: plane.geo_altitude ?? plane.baro_altitude ?? 0,
-        });
+        const point = planePoint(plane);
+        if (!point) continue;
+        const enu = computeENU(observer, point);
         if (!isInRange(enu, rangeKm)) continue;
 
         const offset = toRadarXY(enu, rangeKm, r);
