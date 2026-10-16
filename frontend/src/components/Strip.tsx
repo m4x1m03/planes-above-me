@@ -59,6 +59,26 @@ const ACTION_BUTTON = {
   cursor: "pointer",
 } as const;
 
+// Shown in place of the flight level for taxiing and parked aircraft
+function GroundBadge({ compact }: { compact: boolean }) {
+  return (
+    <span
+      style={{
+        padding: compact ? "2px 6px" : "3px 8px",
+        borderRadius: 4,
+        background: "#21262d",
+        color: "#e6edf3",
+        fontFamily: "'Space Grotesk', system-ui, sans-serif",
+        fontSize: compact ? 11 : 12,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+      }}
+    >
+      On ground
+    </span>
+  );
+}
+
 // Small arrow pointing along the bearing from you to the plane (0° = up = north)
 function BearingArrow({ deg }: { deg: number }) {
   return (
@@ -76,6 +96,7 @@ function BearingArrow({ deg }: { deg: number }) {
 
 export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }: StripProps) {
   const { plane, distanceKm, azimuthDeg, elevationDeg } = row;
+  const onGround = plane.on_ground === true;
 
   return (
     <div
@@ -128,32 +149,36 @@ export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }:
           </span>
         </span>
 
-        {/* Altitude */}
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: compact ? 5 : 6,
-            fontFamily: MONO,
-            fontSize: compact ? 12 : 13,
-          }}
-        >
+        {/* Altitude, or a ground badge for taxiing/parked aircraft */}
+        {onGround ? (
+          <GroundBadge compact={compact} />
+        ) : (
           <span
-            aria-hidden="true"
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: planeColor(plane.baro_altitude, false),
+              display: "flex",
+              alignItems: "center",
+              gap: compact ? 5 : 6,
+              fontFamily: MONO,
+              fontSize: compact ? 12 : 13,
             }}
-          />
-          {orDash(plane.baro_altitude, flightLevel)}
-          {!compact && (
-            <span style={{ color: MUTED }} aria-hidden="true">
-              {orDash(plane.vertical_rate, trendArrow)}
-            </span>
-          )}
-        </span>
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: planeColor(plane.baro_altitude, false),
+              }}
+            />
+            {orDash(plane.baro_altitude, flightLevel)}
+            {!compact && (
+              <span style={{ color: MUTED }} aria-hidden="true">
+                {orDash(plane.vertical_rate, trendArrow)}
+              </span>
+            )}
+          </span>
+        )}
 
         {/* Distance and bearing (bearing only on desktop; it's in the expanded grid on phone) */}
         <span
@@ -199,9 +224,16 @@ export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }:
           >
             <Detail
               label="Altitude"
-              value={orDash(plane.baro_altitude, (m) => `${formatNumber(metersToFeet(m), 100)} ft`)}
+              value={
+                onGround
+                  ? "On ground"
+                  : orDash(plane.baro_altitude, (m) => `${formatNumber(metersToFeet(m), 100)} ft`)
+              }
             />
-            <Detail label="Vertical" value={orDash(plane.vertical_rate, formatVerticalRate)} />
+            <Detail
+              label="Vertical"
+              value={onGround ? "—" : orDash(plane.vertical_rate, formatVerticalRate)}
+            />
             <Detail
               label="Speed"
               value={orDash(plane.velocity, (v) => `${formatNumber(msToKnots(v))} kt`)}
