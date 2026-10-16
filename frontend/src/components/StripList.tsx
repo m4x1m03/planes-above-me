@@ -33,6 +33,7 @@ interface StripListProps {
   selectedPlaneID: string | null;
   onSelectPlane: (id: string | null) => void;
   onRequestView: (view: View) => void;
+  compact?: boolean;
 }
 
 export function StripList({
@@ -42,6 +43,7 @@ export function StripList({
   selectedPlaneID,
   onSelectPlane,
   onRequestView,
+  compact = false,
 }: StripListProps) {
   const [sort, setSort] = useState<SortKey>("distance");
 
@@ -65,6 +67,10 @@ export function StripList({
 
   const count = `${rows.length} ${rows.length === 1 ? "plane" : "planes"} within ${rangeKm} km`;
 
+  const listPadding = compact
+    ? "4px 16px calc(16px + env(safe-area-inset-bottom, 0px))"
+    : "4px 20px 24px";
+
   return (
     <section
       aria-label="Planes in range"
@@ -73,7 +79,9 @@ export function StripList({
         minWidth: 0,
         minHeight: 0,
         background: "#0f141b",
-        borderLeft: "1px solid #21262d",
+        ...(compact
+          ? { borderTop: "1px solid #21262d", borderRadius: "16px 16px 0 0" }
+          : { borderLeft: "1px solid #21262d" }),
         color: "#e6edf3",
         fontFamily: "'Space Grotesk', system-ui, sans-serif",
         display: "flex",
@@ -83,18 +91,22 @@ export function StripList({
       {/* Header */}
       <div
         style={{
-          padding: "24px 20px 14px",
+          padding: compact ? "12px 16px 8px" : "24px 20px 14px",
           display: "flex",
           flexWrap: "wrap",
-          gap: 12,
+          gap: compact ? 8 : 12,
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>In range</h2>
-          <span style={{ fontSize: 13, color: MUTED }}>{count}</span>
-        </div>
+        {compact ? (
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{rows.length} in range</h2>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>In range</h2>
+            <span style={{ fontSize: 13, color: MUTED }}>{count}</span>
+          </div>
+        )}
 
         <div
           role="group"
@@ -124,7 +136,7 @@ export function StripList({
 
       {/* List */}
       {rows.length === 0 ? (
-        <p style={{ margin: 0, padding: "4px 20px 24px", fontSize: 14, color: MUTED }}>
+        <p style={{ margin: 0, padding: listPadding, fontSize: 14, color: MUTED }}>
           {coords ? `No planes within ${rangeKm} km` : "Waiting for your location…"}
         </p>
       ) : (
@@ -134,7 +146,7 @@ export function StripList({
             flex: 1,
             minHeight: 0,
             overflowY: "auto",
-            padding: "4px 20px 24px",
+            padding: listPadding,
             display: "flex",
             flexDirection: "column",
             gap: 8,
@@ -150,6 +162,7 @@ export function StripList({
                 selected={selected}
                 onToggle={() => onSelectPlane(selected ? null : id)}
                 onShowOnMap={() => onRequestView("map")}
+                compact={compact}
               />
             );
           })}
