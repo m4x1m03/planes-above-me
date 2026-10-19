@@ -7,6 +7,7 @@ RUN npm ci --omit=dev
 
 COPY dist ./dist
 COPY migrations ./migrations
+COPY data ./data
 
 EXPOSE 3000
 
