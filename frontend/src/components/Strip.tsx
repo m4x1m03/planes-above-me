@@ -11,6 +11,7 @@ import {
   trendArrow,
 } from "../utils/units";
 import { planeLabel } from "../utils/planeLabel";
+import { airlineLabel, spokenCallsign } from "../utils/airline";
 
 const MONO = "'JetBrains Mono', monospace";
 const MUTED = "#9ba5b0";
@@ -144,8 +145,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }:
               textOverflow: "ellipsis",
             }}
           >
-            {/* Swap for airline · type once the Plane type carries them */}
-            {plane.icao24}
+            {airlineLabel(plane) ?? plane.icao24}
           </span>
         </span>
 
@@ -241,6 +241,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }:
             <Detail label="Azimuth" value={formatBearing(azimuthDeg)} />
             <Detail label="Elevation" value={`${elevationDeg.toFixed(0)}°`} />
             <Detail label="Heading" value={orDash(plane.heading, formatBearing)} />
+            <Detail label="Radio" value={spokenCallsign(plane) ?? "—"} />
             <Detail label="ICAO24" value={plane.icao24} />
             {/* Add a Registration cell here once the Plane type carries it */}
             <Detail label="Squawk" value={plane.squawk ?? "—"} />
