@@ -1,0 +1,34 @@
+# Dependencies: installed fresh by `npm ci` inside the image
+node_modules
+
+# Local secrets and env files (production values come from ECS)
+.env
+.env.*
+!.env.example
+
+# Source and tooling: the image only runs the prebuilt dist/
+src
+test
+tests
+coverage
+*.test.ts
+*.spec.ts
+tsconfig*.json
+eslint.config.*
+.eslintcache
+
+# Git, editor and OS clutter
+.git
+.gitignore
+.vscode
+.idea
+*.log
+npm-debug.log*
+.DS_Store
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Keep these (do NOT add them above): dist/, migrations/, data/, certs/, package*.json
