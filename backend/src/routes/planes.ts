@@ -1,6 +1,10 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { getSnapshot } from '../cache.js';
 import type { Plane } from '../types/planes.js';
+import type { Airline } from '../airlines/types.js';
+import { resolveAirline } from '../airlines/resolve.js';
+
+type PlaneResponse = Plane & { airline: Airline | null };
 
 interface PlanesQuery {
     lamin: string;
@@ -30,6 +34,11 @@ export const planesRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
                 plane.lon >= lon_min && plane.lon <= lon_max,
         );
 
-        return reply.code(200).send(inBox);
+        const withAirlines: PlaneResponse[] = inBox.map((plane) => ({
+            ...plane,
+            airline: resolveAirline(plane.callsign, app.airlines),
+        }));
+
+        return reply.code(200).send(withAirlines);
     });
 };
