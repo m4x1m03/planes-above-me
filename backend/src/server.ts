@@ -5,7 +5,8 @@ import {fastifyCors} from '@fastify/cors';
 import { healthRoute } from './routes/health.js';
 import dbPlugin from './db/plugin.js';
 import migratePlugin from './db/migrate.js';
-import seedPlugin from './db/seed/plugin.js'
+import seedPlugin from './db/seed/plugin.js';
+import airlinesPlugin from './airlines/plugin.js'
 
 export const buildServer = () => {
     const app = Fastify({
@@ -17,6 +18,7 @@ export const buildServer = () => {
     app.register(dbPlugin);
     app.register(migratePlugin);
     app.register(seedPlugin);
+    app.register(airlinesPlugin);
 
     // TODO: make it read a env var instead later
     app.register(fastifyCors, {
