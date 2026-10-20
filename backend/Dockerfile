@@ -8,6 +8,7 @@ RUN npm ci --omit=dev
 COPY dist ./dist
 COPY migrations ./migrations
 COPY data ./data
+COPY certs ./certs
 
 EXPOSE 3000
 
