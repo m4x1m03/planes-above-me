@@ -3,6 +3,7 @@ import { scaleLinear } from 'd3-scale';
 import { interpolateHcl } from 'd3-interpolate';
 
 export const SELECTED_COLOR = '#fbd100';
+export const ON_GROUND_COLOR = '#8b949e';
 
 export const ALTITUDE_STOPS = [
   [0,    '#ff3838'],
@@ -32,6 +33,17 @@ export function altitudeColor(altitudeM: number | null): string {
   return altitudeScale(altitudeM ?? 0);
 }
 
-export function planeColor(altitudeM: number | null, selected: boolean): string {
-  return selected ? SELECTED_COLOR : altitudeColor(altitudeM);
+export function planeColor(altitudeM: number | null, selected: boolean, onGround = false): string {
+  if (selected) return SELECTED_COLOR;
+  if (onGround) return ON_GROUND_COLOR;
+  return altitudeColor(altitudeM);
+}
+
+export function planeColorExpression(): ExpressionSpecification {
+  return [
+    'case',
+    ['boolean', ['feature-state', 'selected'], false], SELECTED_COLOR,
+    ['boolean', ['get', 'on_ground'], false], ON_GROUND_COLOR,
+    altitudeColorExpression(),
+  ];
 }

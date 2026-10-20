@@ -24,7 +24,7 @@ const GLYPH_HEADING_DEG = 90;  // points east
 
 /** Plane glyph and halo sizes in CSS px, smaller on the compact (phone) scope. */
 export function planeSizes(compact: boolean): { glyphPx: number; haloPx: number } {
-  return compact ? { glyphPx: 16, haloPx: 12 } : { glyphPx: 20, haloPx: 15 };
+  return compact ? { glyphPx: 24, haloPx: 14 } : { glyphPx: 30, haloPx: 18 };
 }
 
 const MONO = "'JetBrains Mono', monospace";

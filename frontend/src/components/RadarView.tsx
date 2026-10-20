@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 import type { Coords } from "../hooks/useGeolocation";
 import type { Plane } from "../types/planes";
 import type { View } from "../types/views";
+import { COMPACT_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import RadarScope from "./RadarScope";
 import { RangeControl } from "./RangeControl";
 import { AltitudeLegend } from "./AltitudeLegend";
@@ -19,35 +20,44 @@ interface RadarViewProps {
   onRequestView: (view: View) => void;
 }
 
-function RadarView({coords, rangeKm, rangeSteps, planesRef, planeSnapshot, selectedPlaneID, onSelectPlane, onRangeChange, onRequestView,}: RadarViewProps) {
+function RadarView({coords, rangeKm, rangeSteps, planesRef, planeSnapshot, selectedPlaneID, onSelectPlane, onRangeChange, onRequestView}: RadarViewProps) {
+  const compact = useMediaQuery(COMPACT_QUERY);
+
   return (
     <div
       style={{
-        width: '100vw',
-        height: '100dvh',
-        background: '#0d1117',
-        color: '#9ba5b0',
-        display: 'flex',
+        width: "100vw",
+        height: "100dvh",
+        background: "#0d1117",
+        color: "#9ba5b0",
+        display: "flex",
+        flexDirection: compact ? "column" : "row",
       }}
     >
-      {/* Radar column: left 2/3 */}
+      {/* Radar column */}
       <div
         style={{
-          flex: 2,
+          flex: compact ? "none" : 2,
           minWidth: 0,
-          boxSizing: 'border-box',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16,
+          boxSizing: "border-box",
+          padding: compact ? "16px 16px 12px" : 24,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: compact ? 8 : 16,
         }}
       >
-        <div style={{ alignSelf: 'stretch', display: 'flex', justifyContent: 'flex-end', minHeight: 52 }}>
-          <RangeControl rangeKm={rangeKm} steps={rangeSteps} onChange={onRangeChange} />
+        {/* Same height as the fixed view switcher, so the scope starts below it */}
+        <div style={{ alignSelf: "stretch", display: "flex", justifyContent: "flex-end", minHeight: 52 }}>
+          <RangeControl rangeKm={rangeKm} steps={rangeSteps} onChange={onRangeChange} compact={compact} />
         </div>
 
-        <div style={{ width: 'min(100%, calc(100dvh - 140px))' }}>
+        <div
+          style={{
+            // Phone: cap the scope so the list keeps at least half the screen
+            width: compact ? "min(100%, 42dvh)" : "min(100%, calc(100dvh - 140px))",
+          }}
+        >
           <RadarScope
             coords={coords}
             rangeKm={rangeKm}
@@ -57,13 +67,22 @@ function RadarView({coords, rangeKm, rangeSteps, planesRef, planeSnapshot, selec
           />
         </div>
 
-        <div style={{ alignSelf: 'stretch', display: 'flex' }}>
-          <AltitudeLegend />
-        </div>
+        {!compact && (
+          <div style={{ alignSelf: "stretch", display: "flex" }}>
+            <AltitudeLegend />
+          </div>
+        )}
       </div>
 
-      {/* Strip list: right 1/3 */}
-      <div style={{ flex: 1, minWidth: 320, display: 'flex' }}>
+      {/* Strip list */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: compact ? 0 : 320,
+          minHeight: 0,
+          display: "flex",
+        }}
+      >
         <StripList
           coords={coords}
           rangeKm={rangeKm}
@@ -71,6 +90,7 @@ function RadarView({coords, rangeKm, rangeSteps, planesRef, planeSnapshot, selec
           selectedPlaneID={selectedPlaneID}
           onSelectPlane={onSelectPlane}
           onRequestView={onRequestView}
+          compact={compact}
         />
       </div>
     </div>

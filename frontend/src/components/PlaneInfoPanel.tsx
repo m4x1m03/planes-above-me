@@ -10,6 +10,7 @@ import {
   msToKmh,
   msToKnots,
 } from "../utils/units";
+import { airlineLabel } from "../utils/airline";
 import "./PlaneInfoPanel.css";
 
 type PlaneInfoPanelProps = {
@@ -134,7 +135,7 @@ export function PlaneInfoPanel({ plane, observerCoords, onClose }: PlaneInfoPane
         </div>
         <div className="plane-panel__row">
           <dt>Airline</dt>
-          <dd>—</dd>
+          <dd>{airlineLabel(plane) ?? "—"}</dd>
         </div>
         <div className="plane-panel__row">
           <dt>Aircraft</dt>

@@ -8,8 +8,7 @@ import type { Plane } from "../types/planes";
 import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { altitudeColorExpression } from "../libs/planeStyle";
-import { SELECTED_COLOR } from "../libs/planeStyle";
+import { planeColorExpression } from "../libs/planeStyle";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -64,10 +63,8 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
           'icon-allow-overlap': true,
           'icon-rotate': ['get', 'heading']
         },
-        'paint' : {
-          'icon-color': ['case', ['boolean', ['feature-state', 'selected'], false],
-            SELECTED_COLOR,
-            altitudeColorExpression()]
+        'paint': {
+          'icon-color': planeColorExpression()
         }
       });
       mapRef.current!.addLayer(

@@ -11,6 +11,7 @@ import {
   trendArrow,
 } from "../utils/units";
 import { planeLabel } from "../utils/planeLabel";
+import { airlineLabel, spokenCallsign } from "../utils/airline";
 
 const MONO = "'JetBrains Mono', monospace";
 const MUTED = "#9ba5b0";
@@ -20,6 +21,8 @@ interface StripProps {
   selected: boolean;
   onToggle: () => void;
   onShowOnMap: () => void;
+  /** Phone layout: denser header, no bearing line, full-width buttons */
+  compact?: boolean;
 }
 
 // "+1,280 fpm" when climbing, "-640 fpm" descending, "0 fpm" level
@@ -57,6 +60,26 @@ const ACTION_BUTTON = {
   cursor: "pointer",
 } as const;
 
+// Shown in place of the flight level for taxiing and parked aircraft
+function GroundBadge({ compact }: { compact: boolean }) {
+  return (
+    <span
+      style={{
+        padding: compact ? "2px 6px" : "3px 8px",
+        borderRadius: 4,
+        background: "#21262d",
+        color: "#e6edf3",
+        fontFamily: "'Space Grotesk', system-ui, sans-serif",
+        fontSize: compact ? 11 : 12,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+      }}
+    >
+      On ground
+    </span>
+  );
+}
+
 // Small arrow pointing along the bearing from you to the plane (0° = up = north)
 function BearingArrow({ deg }: { deg: number }) {
   return (
@@ -72,8 +95,9 @@ function BearingArrow({ deg }: { deg: number }) {
   );
 }
 
-export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
+export function Strip({ row, selected, onToggle, onShowOnMap, compact = false }: StripProps) {
   const { plane, distanceKm, azimuthDeg, elevationDeg } = row;
+  const onGround = plane.on_ground === true;
 
   return (
     <div
@@ -93,9 +117,9 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
         onClick={onToggle}
         style={{
           width: "100%",
-          minHeight: 60,
+          minHeight: compact ? 56 : 60,
           margin: 0,
-          padding: "10px 14px",
+          padding: compact ? "8px 12px" : "10px 14px",
           border: 0,
           background: "transparent",
           color: "#e6edf3",
@@ -104,12 +128,12 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: 14,
+          gap: compact ? 10 : 14,
         }}
       >
         {/* Identity */}
-        <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: "0.01em" }}>
+        <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: compact ? 1 : 2 }}>
+          <span style={{ fontSize: compact ? 16 : 17, fontWeight: 600, letterSpacing: "0.01em" }}>
             {planeLabel(plane)}
           </span>
           <span
@@ -121,32 +145,45 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
               textOverflow: "ellipsis",
             }}
           >
-            {/* Swap for airline · type once the Plane type carries them */}
-            {plane.icao24}
+            {airlineLabel(plane) ?? plane.icao24}
           </span>
         </span>
 
-        {/* Altitude */}
-        <span style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 13 }}>
+        {/* Altitude, or a ground badge for taxiing/parked aircraft */}
+        {onGround ? (
+          <GroundBadge compact={compact} />
+        ) : (
           <span
-            aria-hidden="true"
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: planeColor(plane.baro_altitude, false),
+              display: "flex",
+              alignItems: "center",
+              gap: compact ? 5 : 6,
+              fontFamily: MONO,
+              fontSize: compact ? 12 : 13,
             }}
-          />
-          {orDash(plane.baro_altitude, flightLevel)}
-          <span style={{ color: MUTED }} aria-hidden="true">
-            {orDash(plane.vertical_rate, trendArrow)}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: planeColor(plane.baro_altitude, false),
+              }}
+            />
+            {orDash(plane.baro_altitude, flightLevel)}
+            {!compact && (
+              <span style={{ color: MUTED }} aria-hidden="true">
+                {orDash(plane.vertical_rate, trendArrow)}
+              </span>
+            )}
           </span>
-        </span>
+        )}
 
-        {/* Distance and bearing */}
+        {/* Distance and bearing (bearing only on desktop; it's in the expanded grid on phone) */}
         <span
           style={{
-            minWidth: 72,
+            minWidth: compact ? 58 : 72,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
@@ -154,33 +191,49 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
             fontFamily: MONO,
           }}
         >
-          <span style={{ fontSize: 16 }}>
+          <span style={{ fontSize: compact ? 15 : 16 }}>
             {distanceKm.toFixed(1)}
             <span style={{ fontSize: 11, color: MUTED }}> km</span>
           </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: MUTED }}>
-            <BearingArrow deg={azimuthDeg} />
-            {formatBearing(azimuthDeg)}
-          </span>
+          {!compact && (
+            <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: MUTED }}>
+              <BearingArrow deg={azimuthDeg} />
+              {formatBearing(azimuthDeg)}
+            </span>
+          )}
         </span>
       </button>
 
       {selected && (
-        <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div
+          style={{
+            padding: compact ? "0 12px 12px" : "0 14px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: compact ? 12 : 14,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid #30363d",
-              paddingTop: 12,
+              paddingTop: compact ? 10 : 12,
               display: "grid",
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: "12px 10px",
+              gap: compact ? "10px 8px" : "12px 10px",
             }}
           >
             <Detail
               label="Altitude"
-              value={orDash(plane.baro_altitude, (m) => `${formatNumber(metersToFeet(m), 100)} ft`)}
+              value={
+                onGround
+                  ? "On ground"
+                  : orDash(plane.baro_altitude, (m) => `${formatNumber(metersToFeet(m), 100)} ft`)
+              }
             />
-            <Detail label="Vertical" value={orDash(plane.vertical_rate, formatVerticalRate)} />
+            <Detail
+              label="Vertical"
+              value={onGround ? "—" : orDash(plane.vertical_rate, formatVerticalRate)}
+            />
             <Detail
               label="Speed"
               value={orDash(plane.velocity, (v) => `${formatNumber(msToKnots(v))} kt`)}
@@ -188,6 +241,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
             <Detail label="Azimuth" value={formatBearing(azimuthDeg)} />
             <Detail label="Elevation" value={`${elevationDeg.toFixed(0)}°`} />
             <Detail label="Heading" value={orDash(plane.heading, formatBearing)} />
+            <Detail label="Radio" value={spokenCallsign(plane) ?? "—"} />
             <Detail label="ICAO24" value={plane.icao24} />
             {/* Add a Registration cell here once the Plane type carries it */}
             <Detail label="Squawk" value={plane.squawk ?? "—"} />
@@ -199,6 +253,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
               onClick={onShowOnMap}
               style={{
                 ...ACTION_BUTTON,
+                ...(compact ? { flex: 1 } : {}),
                 border: 0,
                 background: SELECTED_COLOR,
                 color: "#0d1117",
@@ -213,6 +268,7 @@ export function Strip({ row, selected, onToggle, onShowOnMap }: StripProps) {
               title="Coming with the dome view"
               style={{
                 ...ACTION_BUTTON,
+                ...(compact ? { flex: 1 } : {}),
                 border: "1px solid #30363d",
                 background: "transparent",
                 color: "#e6edf3",

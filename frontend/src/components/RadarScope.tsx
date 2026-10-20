@@ -77,7 +77,7 @@ function RadarScope({rangeKm, coords, planesRef, selectedPlaneID, onSelectPlane}
           continue;
         }
 
-        drawPlane(ctx, x, y, plane.heading, planeColor(plane.baro_altitude, false), glyphPx);
+        drawPlane(ctx, x, y, plane.heading, planeColor(plane.baro_altitude, false, plane.on_ground), glyphPx);
         if (!compact) drawLabel(ctx, x, y, planeLabel(plane));
       }
 

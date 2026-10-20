@@ -1,6 +1,14 @@
+export type Airline = {
+  icao: string;
+  name: string | null;
+  telephony: string | null;
+  country: string | null;
+};
+
 export type Plane = {
   icao24: string;
   callsign: string | null;
+  airline: Airline | null;
   lat: number;
   lon: number;
   heading: number | null;
