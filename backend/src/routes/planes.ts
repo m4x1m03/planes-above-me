@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import { getSnapshot } from '../cache.js';
 import type { Plane } from '../types/planes.js';
 import type { Airline } from '../airlines/types.js';
 import { resolveAirline } from '../airlines/resolve.js';
@@ -7,31 +6,42 @@ import { resolveAirline } from '../airlines/resolve.js';
 type PlaneResponse = Plane & { airline: Airline | null };
 
 interface PlanesQuery {
-    lamin: string;
-    lomin: string;
-    lamax: string;
-    lomax: string;
+    lamin: number;
+    lomin: number;
+    lamax: number;
+    lomax: number;
 }
 
+const querySchema = {
+  type: 'object',
+  required: ['lamin', 'lomin', 'lamax', 'lomax'],
+  properties: {
+    lamin: { type: 'number', minimum: -90, maximum: 90 },
+    lamax: { type: 'number', minimum: -90, maximum: 90 },
+    lomin: { type: 'number', minimum: -180, maximum: 180 },
+    lomax: { type: 'number', minimum: -180, maximum: 180 },
+  },
+} as const;
+
 export const planesRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
-    app.get<{ Querystring: PlanesQuery }>('/planes', async (request, reply) => {
+    app.get<{ Querystring: PlanesQuery }>('/planes', { schema: { querystring: querySchema } }, async (request, reply) => {
         const { lamin, lomin, lamax, lomax } = request.query;
+        if(lamin > lamax || lomin > lomax) return reply.code(400).send({ error: 'lamin must be ≤ lamax and lomin ≤ lomax' });
 
-        const lat_min = parseFloat(lamin);
-        const lat_max = parseFloat(lamax);
-        const lon_min = parseFloat(lomin);
-        const lon_max = parseFloat(lomax);
-
-        const snapshot = getSnapshot();
-
-        if (!snapshot) {
+        const centerLat = (lamin + lamax) / 2;
+        const centerLon = (lomin + lomax) / 2;
+        let planes: Plane[];
+        try {
+            planes = await app.planeCache.getPlanesAround(centerLat, centerLon);
+        } catch (err) {
+            request.log.warn({ err }, 'live data unavailable');
             return reply.code(200).send([]);
         }
 
-        const inBox = snapshot.planes.filter(
+        const inBox = planes.filter(
             (plane) =>
-                plane.lat >= lat_min && plane.lat <= lat_max &&
-                plane.lon >= lon_min && plane.lon <= lon_max,
+                plane.lat >= lamin && plane.lat <= lamax &&
+                plane.lon >= lomin && plane.lon <= lomax,
         );
 
         const withAirlines: PlaneResponse[] = inBox.map((plane) => ({
