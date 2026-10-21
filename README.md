@@ -24,7 +24,8 @@ A cloud-hosted, open-source web app for identifying planes in your visual range 
 - [x] Dead reckoning using flat earth estimation for fast updates
 - [x] Azimuth and elevation based on user's location using round earth calculations
 - [x] Refactor for different view implementation
-- [ ] Radar view
+- [x] Radar view
+- [x] switch data provider for aws deployment
 - [ ] Dome view (star-map style sky view)
 
 ## Cloud setup
@@ -40,3 +41,8 @@ The system is currently hosted on AWS, making use of what I learned in the AWS C
 
 The system follows best practices such as load balancing, multi-AZ deployment, IAM security, etc. Only the RDS database is deployed in a single AZ instead of the recommended multi-AZ because of the free plan limits.
 
+## Data
+The data used for this project comes from:
+- adsb.lol (https://www.adsb.lol/docs/open-data/api/)
+
+It is planned for this project to use your own adsb receiver data, but for now it uses a single api source (might make it multi source to have freshest data and most complete)
