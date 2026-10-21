@@ -7,6 +7,7 @@ import RadarScope from "./RadarScope";
 import { RangeControl } from "./RangeControl";
 import { AltitudeLegend } from "./AltitudeLegend";
 import { StripList } from "./StripList";
+import { DataAttribution } from "./DataAttribution"; 
 
 interface RadarViewProps {
   coords: Coords | null;
@@ -67,9 +68,20 @@ function RadarView({coords, rangeKm, rangeSteps, planesRef, planeSnapshot, selec
           />
         </div>
 
-        {!compact && (
-          <div style={{ alignSelf: "stretch", display: "flex" }}>
+        {compact ? (
+          <DataAttribution />
+        ) : (
+          <div
+            style={{
+              alignSelf: "stretch",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              gap: 16,
+            }}
+          >
             <AltitudeLegend />
+            <DataAttribution />
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import { planesToGeoJSON } from "../utils/planesToGeoJSON";
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { planeColorExpression } from "../libs/planeStyle";
+import { ADSB_ATTRIBUTION_HTML } from "./DataAttribution";
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -44,7 +45,8 @@ function MapView({ coords, planesRef, selectedPlaneID, onSelectPlane }: MapViewP
           'type': 'FeatureCollection',
           'features': []
         },
-        'promoteId' : 'icao24'
+        'promoteId' : 'icao24',
+        'attribution': ADSB_ATTRIBUTION_HTML,
       });
       mapRef.current!.addSource('user-location', {
         'type' : 'geojson',
