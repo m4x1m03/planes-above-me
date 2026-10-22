@@ -26,6 +26,7 @@ A cloud-hosted, open-source web app for identifying planes in your visual range 
 - [x] Refactor for different view implementation
 - [x] Radar view
 - [x] switch data provider for aws deployment
+- [ ] Change geoloc to watch position
 - [ ] Dome view (star-map style sky view)
 
 ## Cloud setup
