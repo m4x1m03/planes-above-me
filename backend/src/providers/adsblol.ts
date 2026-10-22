@@ -4,6 +4,7 @@ import { toPlane, type ReadsbAircraft } from './readsb.js';
 
 interface AdsbLolConfig {
   baseUrl: string;        // https://api.adsb.lol
+  apiKey?: string | undefined;  // sent as x-api-key when set
   timeoutMs?: number;     // default 5000
   fetchFn?: typeof fetch; // default: global fetch, swapped out in tests
 }
@@ -20,7 +21,9 @@ export function unwrapAdsbLol(body: unknown): { aircraft: ReadsbAircraft[]; nowM
 }
 
 export function createAdsbLolProvider(config: AdsbLolConfig): PlaneProvider {
-  const { baseUrl, timeoutMs = 5000, fetchFn = fetch } = config;
+  const { baseUrl, apiKey, timeoutMs = 5000, fetchFn = fetch } = config;
+  const headers: Record<string, string> = { 'User-Agent': 'planes-above.com (+https://planes-above.com)' };
+  if (apiKey) headers['x-api-key'] = apiKey;
   return {
     name: 'adsb.lol',
     async getPlanesNear(lat, lon, radiusNm) {
@@ -30,7 +33,7 @@ export function createAdsbLolProvider(config: AdsbLolConfig): PlaneProvider {
       try {
         res = await fetchFn(url, {
           signal: AbortSignal.timeout(timeoutMs),
-          headers: { 'User-Agent': 'planes-above.com (+https://planes-above.com)' },
+          headers
         });
       } catch (err) {
         const reason = err instanceof Error && err.name === 'TimeoutError' ? 'request timed out' : 'network error';

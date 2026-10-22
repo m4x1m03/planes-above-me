@@ -11,7 +11,8 @@ declare module 'fastify' {
 export default fp(async (app) => {
   const provider = createAdsbLolProvider({
     baseUrl: process.env.ADSB_API_BASE ?? 'https://api.adsb.lol',
+    apiKey: process.env.ADSB_API_KEY,
   });
   app.decorate('planeCache', createPlaneCache({ provider }));
-  app.log.info({ provider: provider.name }, 'live plane provider ready');
+  app.log.info({ provider: provider.name, apiKey: Boolean(process.env.ADSB_API_KEY) }, 'live plane provider ready');
 });

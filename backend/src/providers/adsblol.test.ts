@@ -13,11 +13,13 @@ const BASE_URL = 'https://api.adsb.lol';
 // Fake fetch: records the URLs it was called with and returns whatever `respond` gives
 function fakeFetch(respond: () => Response | Promise<Response>) {
   const calls: string[] = [];
-  const fn: typeof fetch = async (input) => {
+  const inits: Array<RequestInit | undefined> = [];
+  const fn: typeof fetch = async (input, init) => {
     calls.push(String(input));
+    inits.push(init);
     return respond();
   };
-  return { fn, calls };
+  return { fn, calls, inits };
 }
 
 // Checks that a promise rejects with a ProviderError carrying the given status
@@ -126,4 +128,18 @@ test('provider: throws a ProviderError when the JSON shape is wrong', async () =
   const provider = createAdsbLolProvider({ baseUrl: BASE_URL, fetchFn: fn });
 
   await assertProviderError(provider.getPlanesNear(48.86, 2.35, 10), null);
+});
+
+test('provider: sends the API key in the x-api-key header', async () => {
+  const { fn, inits } = fakeFetch(() => new Response(fixtureText));
+  const provider = createAdsbLolProvider({ baseUrl: BASE_URL, apiKey: 'test-key', fetchFn: fn });
+  await provider.getPlanesNear(48.86, 2.35, 10);
+  assert.equal(new Headers(inits[0]?.headers).get('x-api-key'), 'test-key');
+});
+
+test('provider: sends no x-api-key header without a key', async () => {
+  const { fn, inits } = fakeFetch(() => new Response(fixtureText));
+  const provider = createAdsbLolProvider({ baseUrl: BASE_URL, fetchFn: fn });
+  await provider.getPlanesNear(48.86, 2.35, 10);
+  assert.equal(new Headers(inits[0]?.headers).get('x-api-key'), null);
 });
